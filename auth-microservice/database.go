@@ -12,3 +12,7 @@ func connection() {
 
 	//defer db.Close()
 }
+
+func Migrate() {
+	db.AutoMigrate(Token{})
+}

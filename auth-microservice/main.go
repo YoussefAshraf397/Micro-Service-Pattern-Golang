@@ -9,10 +9,12 @@ var db *gorm.DB = nil
 var err error
 
 func main() {
-	connection()
-	db.AutoMigrate(Token{})
-	g := gin.Default()
 
+	connection()
+	Migrate()
+
+	g := gin.Default()
+	g.Use(Services())
 	g.GET("/", Welcome)
 	g.Run(":5050")
 }
