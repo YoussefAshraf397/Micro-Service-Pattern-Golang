@@ -11,13 +11,18 @@ var err error
 func main() {
 
 	g := gin.Default()
-	g.GET("/", Welcome)
+
+	posts := g.Group("posts")
+	{
+		posts.GET("/", getpost)
+	}
+
 	g.Run(":6060")
 }
 
-func Welcome(g *gin.Context) {
+func getpost(g *gin.Context) {
 	g.JSON(200, gin.H{
-		"message": "done",
+		"message": "data from posts microservice",
 		"status":  "200",
 		"data":    "",
 	})

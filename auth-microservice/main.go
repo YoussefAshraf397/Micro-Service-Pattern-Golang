@@ -25,4 +25,5 @@ func Welcome(g *gin.Context) {
 		"status":  "200",
 		"data":    "",
 	})
+	return
 }
