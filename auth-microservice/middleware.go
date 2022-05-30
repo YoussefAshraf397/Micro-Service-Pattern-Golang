@@ -1,12 +1,9 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"net/http"
+	"strconv"
 	"strings"
-	"time"
 )
 
 func Services() gin.HandlerFunc {
@@ -28,10 +25,53 @@ func Services() gin.HandlerFunc {
 		serviceUrl := services[segment[0]]
 		NewUrl := serviceUrl + url
 
+		var token Token
+
+		authList := AuthRouteList()
+		for route, _ := range authList {
+			if strings.Contains(url, route) {
+				authorization := g.GetHeader("authorization")
+				if authorization == "" {
+					g.JSON(401, gin.H{
+						"message": "Not Authorize No token in header",
+						"status":  "false",
+						"data":    "",
+					})
+					return
+					g.Abort()
+				}
+
+				db.Where("token =? ", authorization).First(&token)
+				if token.ID == 0 {
+					g.JSON(401, gin.H{
+						"message": "Not Authorize token dost match any tokens ",
+						"status":  "false",
+						"data":    "",
+					})
+					return
+					g.Abort()
+				}
+
+				// Authorized User
+				g.Request.Header.Set("USER_ID", strconv.Itoa(token.UserId))
+
+			}
+		}
+
 		//log.Fatalln(NewUrl)
 
-		Get(g, NewUrl)
-		fmt.Println("url is : ", NewUrl)
+		methode := strings.ToLower(g.Request.Method)
+		switch methode {
+		case "post":
+			Post(g, NewUrl)
+			break
+		case "get":
+			Get(g, NewUrl)
+
+		}
+
+		//Get(g, NewUrl)
+		//fmt.Println("url is : ", NewUrl)
 
 		//g.JSON(200, gin.H{
 		//	"message": "We  found the service",
@@ -41,46 +81,17 @@ func Services() gin.HandlerFunc {
 	}
 }
 
-func Get(g *gin.Context, url string) {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		fmt.Println("error in your request")
-	}
-
-	for key, _ := range g.Request.Header {
-		req.Header.Set(key, g.Request.Header.Get(key))
-	}
-
-	client := &http.Client{Timeout: time.Second * 10}
-
-	response, err := client.Do(req)
-
-	if err != nil {
-		fmt.Println("error in do request")
-	}
-	defer response.Body.Close()
-
-	var result map[string]interface{}
-
-	json.NewDecoder(response.Body).Decode(&result)
-	if len(result) == 0 {
-		g.JSON(500, gin.H{
-			"message": "Not found any data in response",
-			"status":  "false",
-			"data":    "",
-		})
-		return
-	}
-	g.JSON(response.StatusCode, result)
-	return
-
-}
-
 func ServicesList() map[string]string {
 	m := make(map[string]string)
 	m["users"] = "http://127.0.0.1:7070"
 	m["posts"] = "http://127.0.0.1:6060"
 
 	return m
+}
 
+func AuthRouteList() map[string]bool {
+	m := make(map[string]bool)
+	m["my-posts"] = true
+
+	return m
 }
