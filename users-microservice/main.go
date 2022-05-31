@@ -1,13 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
+	"github.com/kirinlabs/HttpRequest"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
 var db *gorm.DB = nil
 var err error
+
+var authorizationToken string = "authtoken"
+var authUrl string = "http://localhost:5050"
 
 func main() {
 
@@ -18,24 +23,17 @@ func main() {
 
 	posts := g.Group("users")
 	{
-		//posts.GET("/", getpost)
-		//posts.GET("/my-posts", MyPosts)
 		posts.POST("/login", LoginUser)
+		//posts.POST("/logout", LogoutUser)
+
 	}
 
-	g.Run(":7070")
+	g.Run(":9090")
 }
 
-//func getpost(g *gin.Context) {
-//	g.JSON(200, gin.H{
-//		"message": "data from posts microservice",
-//		"status":  "200",
-//		"data":    "",
-//	})
-//}
 func LoginUser(g *gin.Context) {
 	var login Login
-	if err := g.ShouldBindBodyWith(&login, binding.JSON); err != nil {
+	if err := g.ShouldBindJSON(&login); err != nil {
 		g.JSON(400, gin.H{
 			"message": "Please enter email and password",
 			"status":  "false",
@@ -54,9 +52,25 @@ func LoginUser(g *gin.Context) {
 		return
 	}
 
+	token, _ := bcrypt.GenerateFromPassword([]byte(user.Email+"*()*654654654"), 3)
+	user.Token = string(token)
+	db.Save(&user)
+
+	fmt.Println("user id in usermicroservice: ", user.ID)
+	req := HttpRequest.NewRequest()
+	req.JSON().Post(authUrl+"/removeStoreToken", map[string]interface{}{
+		"AuthToken": authorizationToken,
+		"UserToken": user.Token,
+		"UserId":    user.ID,
+	})
+
 	g.JSON(200, gin.H{
 		"message": "Welcome in user service",
 		"status":  "true",
 		"data":    user,
 	})
 }
+
+//func LogoutUser(g *gin.Context) {
+//
+//}

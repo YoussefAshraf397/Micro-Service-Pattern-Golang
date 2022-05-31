@@ -11,7 +11,6 @@ type User struct {
 }
 
 type Login struct {
-	gorm.Model
-	Email    string `json: "email"binding:"required`
-	Password string `json: "password"binding:"required`
+	Email    string `json: "email" binding:"required`
+	Password string `json: "password" binding:"required`
 }

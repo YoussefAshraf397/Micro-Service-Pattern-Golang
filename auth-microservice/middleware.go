@@ -83,7 +83,7 @@ func Services() gin.HandlerFunc {
 
 func ServicesList() map[string]string {
 	m := make(map[string]string)
-	m["users"] = "http://127.0.0.1:7070"
+	m["users"] = "http://127.0.0.1:9090"
 	m["posts"] = "http://127.0.0.1:6060"
 
 	return m
